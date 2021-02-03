@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import DatePicker from "react-datepicker";
+import DatePicker  from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import liff from '@line/liff'
 import Loading from './Loading';
+import addDays from 'date-fns/addDays';
+import addYears from 'date-fns/addYears'
 
 
 
@@ -11,10 +13,7 @@ function Task() {
   let params = new URLSearchParams(document.location.search.substring(1))
   const liffId = '1654805076-Qbl9zloL'
   let groupid = params.get("gid")
-  let userid = params.get("uid")
   const [profile, setProfile] = useState({})
-  let id = "C04524879b7343f60a5d49aee099a821b"
-  let uuid = "Uae4fc581117126f7ac87e1096ed77ead"
   const [loading,  IsLoading] = useState(true)
   let isDisabled = false
   const [taskDetail, setTaskDetail] = useState({
@@ -22,25 +21,42 @@ function Task() {
     subject: "",
     detail: "",
     type: "",
-    deadline: ""
+    deadline: "",
+    order_by: "",
+    member: []
   })
-  console.log("gid",groupid)
-  console.log("uid",userid)
-  liff.init({ liffId })
-  console.log("userId",taskDetail.order_to)
+
   if (taskDetail.order_to.length === 0) {
     isDisabled = true
   } else {
     isDisabled = false
   }
   
+  const checkLogin = async () => {
+    if (!liff.isLoggedIn()) {
+      liff.login({ redirectUri: "https://assign-task-jeny.herokuapp.com/?gid="+groupid});
+    } else {
+      let getProfile = await liff.getProfile();
+      setTaskDetail({...taskDetail, order_by: getProfile.userId})
+      IsLoading(false)
+    }
+  }
+
   useEffect(() => {
 
     const fetchProfile = async () => {
+
       IsLoading(true)
-      await axios.get('http://139.59.113.176:2155/group/'+groupid+'/profile')
+
+      await liff.init({ liffId: liffId })
+      .then(() => {
+        checkLogin()
+      })
+      .catch(err => {throw err});
+
+
+      await axios.get('https://back-jeny.cf/group/'+groupid+'/profile')
       .then((response) => {
-        console.log(response.data.UsersProfile)
         setProfile(response.data.UsersProfile)
       })
       .catch((response) => {
@@ -52,38 +68,40 @@ function Task() {
 
   }, [groupid])
 
-  const setUser = (uid) => {
+  const setUser = (uid , mem) => {
     console.log(uid)
     const index = taskDetail.order_to.indexOf(uid)
   
 
     if (taskDetail.order_to.indexOf(uid) !== -1) {
       let emptyArr = taskDetail.order_to
+      let emptyUser = taskDetail.member
       emptyArr.splice(index,1)
-      setTaskDetail({...taskDetail, order_to: emptyArr})
+      emptyUser.splice(index,1)
+      setTaskDetail({...taskDetail, order_to: emptyArr, member: emptyUser})
     } else {
-      setTaskDetail({...taskDetail, order_to: [...taskDetail.order_to, uid]})
+      setTaskDetail({...taskDetail, order_to: [...taskDetail.order_to, uid], member: [...taskDetail.member, mem]})
     }
   }
   
   const handleSubmit = () => {
     console.log(taskDetail)
+    IsLoading(true)
     axios({
       method: 'POST',
       url: 'https://jeny-bot.herokuapp.com/assign/task',
       data: taskDetail,
       headers: {
         'Content-Type': 'application/json',
-        'UserId': userid,
+        'UserId': taskDetail.order_by,
         'GroupId': groupid
       }
     }).then((response) => {
-      if (response.status === 201) {
-
+      if (response.status !== 201) {
+        alert('Failed')
+      } else {
         alert('Success')
         liff.closeWindow()
-      } else {
-        alert('Failed')
       }
     })
     .catch((response)=> {
@@ -106,10 +124,12 @@ function Task() {
               </div>
               <div >
                   {profile.map((p, index) => (
-                  <div className="flex items-center flex-row space-x-4 space-y-4 max-w-md cursor-pointer"  onClick={ () => setUser(p.userId) }>
-                    <input type="checkbox" className="ml-2  form-checkbox text-green-600" id={index} name={p.displayName} value={p.userId}></input>
-                    <img src={p.pictureUrl} alt="profile" style={{borderRadius: "50%", width: "50px"}}></img>
-                    <span className="text-gray-500">{p.displayName}</span>
+                  <div className="flex items-center flex-row space-x-4 space-y-4 max-w-md " >
+                    <label className="flex items-center flex-row space-x-4 space-y-4  cursor-pointer md:w-auto" htmlFor={index} > 
+                      <input type="checkbox" className="ml-2  form-checkbox text-green-600" id={index} name={p.displayName} value={p.userId} onChange={()=> setUser(p.userId, p.displayName)}></input>
+                      <img src={p.pictureUrl} alt="profile" style={{borderRadius: "50%", width: "50px"}}></img>
+                      <span className="text-gray-500">{p.displayName}</span>
+                    </label>
                   </div>
                   ))}
                   
@@ -137,7 +157,14 @@ function Task() {
               </div>
               <div className="flex flex-col mb-5">
                   <label className="mb-1">กำหนดวันส่งงาน</label>
-                  <DatePicker className="max-w-md px-2  b-1 border-2 border-gray-200  rounded-md focus:outline-none focus:border-indigo-500 transition-colors" selected={taskDetail.deadline} onChange={date => setTaskDetail({...taskDetail, deadline: date})} />
+                  <DatePicker className="max-w-md px-2  b-1 border-2 border-gray-200  rounded-md focus:outline-none focus:border-indigo-500 transition-colors" 
+                    selected={taskDetail.deadline} 
+                    onChange={date => setTaskDetail({...taskDetail, deadline: date})} 
+                    minDate={addDays(new Date(),1)}
+                    maxDate={addYears(new Date(), 2)}
+                    placeholderText="เลือกวันส่งงาน"
+                    showDisabledMonthNavigation 
+                  />
               </div>
               <button className="w-full block bg-indigo-500 hover:bg-indigo-700 focus:bg-indigo-700 text-white rounded-lg px-3 py-3 font-semibold disabled:opacity-50" onClick={handleSubmit} disabled={isDisabled}>Submit</button>
             </div>
