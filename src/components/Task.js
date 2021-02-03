@@ -11,8 +11,9 @@ import addYears from 'date-fns/addYears'
 
 function Task() {
   let params = new URLSearchParams(document.location.search.substring(1))
-  const liffId = '1654805076-Qbl9zloL'
+  const liffId = '1654805076-agyLkygK'
   let groupid = params.get("gid")
+  const groupIdStatic = groupid
   const [profile, setProfile] = useState({})
   const [loading,  IsLoading] = useState(true)
   let isDisabled = false
@@ -34,11 +35,10 @@ function Task() {
   
   const checkLogin = async () => {
     if (!liff.isLoggedIn()) {
-      liff.login({ redirectUri: "https://assign-task-jeny.herokuapp.com/?gid="+groupid});
+      liff.login({ redirectUri: "https://assign-task-jeny.herokuapp.com/?gid="+groupIdStatic});
     } else {
       let getProfile = await liff.getProfile();
       setTaskDetail({...taskDetail, order_by: getProfile.userId})
-      IsLoading(false)
     }
   }
 
@@ -54,8 +54,7 @@ function Task() {
       })
       .catch(err => {throw err});
 
-
-      await axios.get('https://back-jeny.cf/group/'+groupid+'/profile')
+      await axios.get('https://back-jeny.cf/group/'+groupIdStatic+'/profile')
       .then((response) => {
         setProfile(response.data.UsersProfile)
       })
@@ -71,7 +70,6 @@ function Task() {
   const setUser = (uid , mem) => {
     console.log(uid)
     const index = taskDetail.order_to.indexOf(uid)
-  
 
     if (taskDetail.order_to.indexOf(uid) !== -1) {
       let emptyArr = taskDetail.order_to
@@ -94,7 +92,7 @@ function Task() {
       headers: {
         'Content-Type': 'application/json',
         'UserId': taskDetail.order_by,
-        'GroupId': groupid
+        'GroupId': groupIdStatic
       }
     }).then((response) => {
       if (response.status !== 201) {
