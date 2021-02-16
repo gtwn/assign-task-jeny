@@ -10,10 +10,10 @@ import addYears from 'date-fns/addYears'
 
 
 function Task() {
-  let params = new URLSearchParams(document.location.search.substring(1))
+  const queryString = decodeURIComponent(window.location.search).replace("?liff.state=", "");
+  const params = new URLSearchParams(queryString)
   const liffId = '1654805076-agyLkygK'
-  let groupid = params.get("gid")
-  const groupIdStatic = groupid
+  const group = params.get("gid")
   const [profile, setProfile] = useState({})
   const [loading,  IsLoading] = useState(true)
   let isDisabled = false
@@ -26,16 +26,15 @@ function Task() {
     order_by: "",
     member: []
   })
-
   if (taskDetail.order_to.length === 0) {
     isDisabled = true
   } else {
     isDisabled = false
   }
-  
+  console.log("params",params.get("gid"));
   const checkLogin = async () => {
     if (!liff.isLoggedIn()) {
-      liff.login({ redirectUri: "https://assign-task-jeny.herokuapp.com/?gid="+groupIdStatic});
+      liff.login({ redirectUri: "https://assign-task-jeny.herokuapp.com/?gid="+group});
     } else {
       let getProfile = await liff.getProfile();
       setTaskDetail({...taskDetail, order_by: getProfile.userId})
@@ -47,14 +46,13 @@ function Task() {
     const fetchProfile = async () => {
 
       IsLoading(true)
-
       await liff.init({ liffId: liffId })
       .then(() => {
         checkLogin()
       })
       .catch(err => {throw err});
 
-      await axios.get('https://back-jeny.cf/group/'+groupIdStatic+'/profile')
+      await axios.get('https://back-jeny.cf/group/'+group+'/profile')
       .then((response) => {
         setProfile(response.data.UsersProfile)
       })
@@ -65,10 +63,9 @@ function Task() {
     }
     fetchProfile()
 
-  }, [groupid])
+  }, [])
 
   const setUser = (uid , mem) => {
-    console.log(uid)
     const index = taskDetail.order_to.indexOf(uid)
 
     if (taskDetail.order_to.indexOf(uid) !== -1) {
@@ -92,17 +89,21 @@ function Task() {
       headers: {
         'Content-Type': 'application/json',
         'UserId': taskDetail.order_by,
-        'GroupId': groupIdStatic
+        'GroupId': group
       }
     }).then((response) => {
-      if (response.status !== 201) {
-        alert('Failed')
-      } else {
+      console.log("res",response.status)
+      if (response.status === 201) {
         alert('Success')
         liff.closeWindow()
+      } else if (response.status === 304) {
+        alert('Please complete the information !')
+        IsLoading(false)
       }
     })
     .catch((response)=> {
+      alert('Please complete the information !')
+      window.location.reload();
       console.log(response)
     })
   }
