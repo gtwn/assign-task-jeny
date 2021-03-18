@@ -120,15 +120,16 @@ function Task() {
                 </label>
               </div>
               <div >
-                  {profile.map((p, index) => (
+                  {profile.map((p, index) => p.userId !== "" ? (
                   <div className="flex items-center flex-row space-x-4 space-y-4 max-w-md " >
                     <label className="flex items-center flex-row space-x-4 space-y-4  cursor-pointer md:w-auto" htmlFor={index} > 
                       <input type="checkbox" className="ml-2  form-checkbox text-green-600" id={index} name={p.displayName} value={p.userId} onChange={()=> setUser(p.userId, p.displayName)}></input>
-                      <img src={p.pictureUrl} alt="profile" style={{borderRadius: "50%", width: "50px"}}></img>
+                      <img src={p.pictureUrl} alt="profile" style={{borderRadius: "50%", width: "50px"}} ></img>
                       <span className="text-gray-500">{p.displayName}</span>
                     </label>
                   </div>
-                  ))}
+                  ): (<div  >
+                </div>))}
                   
               </div>
       
