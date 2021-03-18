@@ -92,19 +92,17 @@ function Task() {
         'GroupId': group
       }
     }).then((response) => {
-      console.log("res",response.status)
-      if (response.status === 201) {
-        alert('Success')
+      console.log(liff.getOS())
+      alert('Success')
+      if (liff.getOS() === 'web') {
+        window.close()
+      } else {
         liff.closeWindow()
-      } else if (response.status === 304) {
-        alert('Please complete the information !')
-        IsLoading(false)
       }
     })
     .catch((response)=> {
       alert('Please complete the information !')
       window.location.reload();
-      console.log(response)
     })
   }
 
