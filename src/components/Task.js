@@ -7,8 +7,6 @@ import Loading from './Loading';
 import addDays from 'date-fns/addDays';
 import addYears from 'date-fns/addYears'
 
-
-
 function Task() {
   const queryString = decodeURIComponent(window.location.search).replace("?liff.state=", "");
   const params = new URLSearchParams(queryString)
@@ -31,7 +29,6 @@ function Task() {
   } else {
     isDisabled = false
   }
-  console.log("params",params.get("gid"));
   const checkLogin = async () => {
     if (!liff.isLoggedIn()) {
       liff.login({ redirectUri: "https://assign-task-jeny.herokuapp.com/?gid="+group});
@@ -80,7 +77,6 @@ function Task() {
   }
   
   const handleSubmit = () => {
-    console.log(taskDetail)
     IsLoading(true)
     axios({
       method: 'POST',
@@ -92,8 +88,9 @@ function Task() {
         'GroupId': group
       }
     }).then((response) => {
-      console.log(liff.getOS())
       alert('Success')
+      console.log("getOS",liff.getOS)
+      console.log("getOS()",liff.getOS())
       if (liff.getOS() === 'web') {
         window.close()
       } else {
@@ -102,6 +99,7 @@ function Task() {
     })
     .catch((response)=> {
       alert('Please complete the information !')
+      console.log(response)
       window.location.reload();
     })
   }
@@ -129,15 +127,20 @@ function Task() {
                     </label>
                   </div>
                   ): (<div  >
+                  {/* <label className="flex items-center flex-row space-x-4 space-y-4  cursor-pointer md:w-auto" htmlFor={index} > 
+                    <input type="checkbox" className="ml-2  form-checkbox text-green-600" id={index} disabled></input>
+                    <img src={DefaultUser} alt="profile" style={{borderRadius: "50%", width: "50px"}} ></img>
+                    <span className="text-gray-500">Mr.Unknown</span>
+                  </label> */}
                 </div>))}
                   
               </div>
       
               <div className="mt-3">
                   <label className="text-base mb-3" >ชื่องาน</label>
-                  <input className="w-full px-3 py-1 mb-1 border-2 border-gray-200 rounded-md focus:outline-none focus:border-indigo-500 transition-colors" type="text" onChange={event => setTaskDetail({...taskDetail, subject: event.target.value})}></input>
+                  <input className="w-full px-3 py-1 mb-1 border-2 border-gray-200 rounded-md focus:outline-none focus:border-indigo-500 transition-colors placeholder-red-300" type="text" onChange={event => setTaskDetail({...taskDetail, subject: event.target.value})} maxlength="100" placeholder="*ยาวไม่เกิน 100 ตัวอักษร"></input>
                   <label className="text-base mb-3" >รายละเอียดงาน</label>
-                  <textarea className="w-full h-32 max-h-full px-3 py-1 mb-1 border-2 border-gray-200  rounded-md focus:outline-none focus:border-indigo-500 transition-colors" rows="10" style={{ resize: "none"}} onChange={event => setTaskDetail({...taskDetail, detail: event.target.value})}></textarea>
+                  <textarea className="w-full h-32 max-h-full px-3 py-1 mb-1 border-2 border-gray-200  rounded-md focus:outline-none focus:border-indigo-500 transition-colors placeholder-red-300" rows="10" style={{ resize: "none"}} onChange={event => setTaskDetail({...taskDetail, detail: event.target.value})} maxlength="300" placeholder="*ยาวไม่เกิน 300 ตัวอักษร"></textarea>
               </div>
               <div className="flex flex-col">
                   <label className="text-base" >ประเภทการสั่งงาน</label>
@@ -159,7 +162,7 @@ function Task() {
                     selected={taskDetail.deadline} 
                     onChange={date => setTaskDetail({...taskDetail, deadline: date})} 
                     minDate={addDays(new Date(),1)}
-                    maxDate={addYears(new Date(), 2)}
+                    maxDate={addYears(new Date(), 1)}
                     placeholderText="เลือกวันส่งงาน"
                     showDisabledMonthNavigation 
                   />
